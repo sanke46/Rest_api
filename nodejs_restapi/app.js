@@ -3,15 +3,48 @@ const app = express()
 const morgan = require('morgan')
 const mysql = require('mysql')
 
-app.use(morgan('combined'))
+const bodyParser = require('body-parser')
 
-app.get('/user/:id', (req, res) => {
-  console.log("Futching user with id: " + req.params.id)
-  const connection = mysql.createConnection({
+app.use(bodyParser.urlencoded({extended : false}))
+
+app.use(express.static('./public'))
+
+app.use(morgan('short'))
+
+app.post('/user_create', (req, res) => {
+  console.log("Trying to create a new user...")
+  console.log('How do we get the form data???')
+
+  console.log("First name: " + req.body.create_first_name)
+  const firstName = req.body.create_first_name
+  const lastName = req.body.create_last_name
+
+  const queryString = "INSERT INTO users (first_name, last_name) VALUES (?, ?)"
+  getConnection().query(queryString, [firstName, lastName], (err, results, fields) => {
+    if (err) {
+      console.log("Fiels to insert new user: " + err)
+      res.sendStatus(500)
+      return
+    }
+
+    console.log("Insert a new user with id: ", results.insertedId);
+    res.end()
+  })
+
+  res.end()
+})
+
+function getConnection() {
+  return mysql.createConnection({
     host: 'localhost',
     user: 'root',
     database: 'bd_for_app'
   })
+}
+
+app.get('/user/:id', (req, res) => {
+  console.log("Futching user with id: " + req.params.id)
+  const connection = getConnection()
 
   const userId = req.params.id
   const queryString = "SELECT * FROM users WHERE id = ?"
@@ -19,19 +52,11 @@ app.get('/user/:id', (req, res) => {
     if (err) {
       console.log("Failed to query for users: " + err)
       res.sendStatus(500)
-      // throw err
       return
     }
-    console.log("I think we fetched users successfully")
-
-    const users = rows.map((row) => {
-      return {firstName: row.first_name, lastName: row.last_name}
-    })
-
-    res.json(users)
+    res.json(rows)
   })
 
-  // res.end()
 })
 
 app.get("/",(req, res) => {
@@ -40,10 +65,17 @@ app.get("/",(req, res) => {
 })
 
 app.get("/users", (req,res) => {
-  var user1 = {firstName: "Stive", lastName: "Svetlov"}
-  const user2 = {firstName: "ilya", lastName: "Fedoseev"}
-  res.json([user1, user2])
-  // res.send("Nodemon auto update whan I save this file")
+  const connection = getConnection()
+
+  const queryString = "SELECT * FROM users"
+  connection.query(queryString, (err, rows, fields) => {
+    if (err) {
+      console.log("Failed to query for users: " + err)
+      res.sendStatus(500)
+      return
+    }
+    res.json(rows)
+  })
 })
 
 app.listen(3000,() => {
