@@ -12,7 +12,7 @@ What new I have learned :
 * Node.js
 * MySQL
 
-# Useing in this project
+# Using in this project
 * Express : https://expressjs.com/ru/
 * Morgan : https://www.npmjs.com/package/morgan
 * MySQL : https://www.mysql.com/
